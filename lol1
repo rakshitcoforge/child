@@ -1,0 +1,48 @@
+package hooks;
+import java.io.*;
+import org.testng.annotations.*;
+import java.net.URL;
+import java.time.Duration;
+import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.*;
+import org.openqa.selenium.edge.*;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import io.cucumber.java.*;
+import io.qameta.allure.Allure;
+import base.Base;
+
+public class ScenarioHook extends Base {
+	RemoteWebDriver remoteDriver;
+
+	// WebDriver driver;
+	@Before
+	public void setup() {
+		try {
+			String browser = this.getBrowser();
+			System.out.println("java -jar src/main/resources/selenium-server-4.44.0.jar standalone");
+			if (browser.equals("chrome")) {
+				ChromeOptions options = new ChromeOptions();
+				options.setCapability("platformName", "Windows");
+				remoteDriver = new RemoteWebDriver(new URL("http:localhost:4444"), options);
+			} else if (browser.equals("edge")) {
+				EdgeOptions options = new EdgeOptions();
+				options.setCapability("platformName", "Windows");
+				remoteDriver = new RemoteWebDriver(new URL("http:localhost:4444"), options);
+			}
+			setDriver(remoteDriver);
+			getDriver().manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	// java -jar src/main/resources/selenium-server-4.44.0.jar standalone
+
+	@After
+	public void tearDown(Scenario scenario) throws InterruptedException {
+		if(!scenario.isFailed()) {
+			byte[] screenshot = ((TakesScreenshot) getDriver()).getScreenshotAs(OutputType.BYTES);
+			Allure.addAttachment("Screenshot", new ByteArrayInputStream(screenshot));
+		}
+		getDriver().quit();
+	}
+}
